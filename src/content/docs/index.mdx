@@ -1,0 +1,42 @@
+---
+title: chinny-swg
+description: Documentation for the chinny-swg SWGEmu Core3 fork — building, deploying, and administering a Pre-CU Star Wars Galaxies private server.
+template: splash
+hero:
+  tagline: A Pre-CU Star Wars Galaxies private server, built on a fork of SWGEmu Core3.
+  actions:
+    - text: Get started
+      link: /guides/overview/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/chinny-swg/Core3
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What this is
+
+[SWGEmu](https://www.swgemu.com/) recreates **Pre-CU** *Star Wars Galaxies* (the era before the 2005 Combat Upgrade) via a reverse-engineered server emulator. **Core3** is the server software — a C++ engine plus Lua game scripts.
+
+These docs cover the **`chinny-swg`** fork of Core3 (with custom **SWGRealmsAPI** work): how to build it, deploy it with Docker, run it on a home server, and administer it.
+
+<CardGrid stagger>
+  <Card title="Overview & Requirements" icon="information">
+    What Core3 is, what you need (client `.tre` files, hardware), and how the pieces fit together. [Read the overview](/guides/overview/)
+  </Card>
+  <Card title="Build it" icon="seti:cpp">
+    Compile Core3 natively on WSL/Debian, or build the Docker image. [Building Core3](/guides/building-core3/)
+  </Card>
+  <Card title="Deploy it" icon="docker">
+    Run the server in a container, locally or on a Linux host managed by Dockge. [Docker Deployment](/guides/docker-deployment/)
+  </Card>
+  <Card title="Administer it" icon="setting">
+    Staff slash commands, server console commands, and how to grant admin. [Admin reference](/reference/admin-commands/)
+  </Card>
+</CardGrid>
+
+:::note[Personal project]
+This is a private, personal-use server fork for exploration and learning. Pre-CU SWG content and assets are property of their respective owners; you must supply your own original SWG client `.tre` files.
+:::

@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import starlightThemeCatppuccin from '@catppuccin/starlight';
 
 // https://astro.build/config
 export default defineConfig({
@@ -11,6 +12,12 @@ export default defineConfig({
       title: 'chinny-swg',
       description:
         'Documentation for the chinny-swg SWGEmu Core3 fork — building, deploying, and administering a Pre-CU Star Wars Galaxies private server.',
+      plugins: [
+        starlightThemeCatppuccin({
+          dark: { flavor: 'mocha', accent: 'sky' },
+          light: { flavor: 'latte', accent: 'sky' },
+        }),
+      ],
       social: [
         {
           icon: 'github',

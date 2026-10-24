@@ -39,6 +39,7 @@ export default defineConfig({
             { label: 'Building Core3', slug: 'guides/building-core3' },
             { label: 'Docker Deployment', slug: 'guides/docker-deployment' },
             { label: 'Server Deployment (Dockge)', slug: 'guides/server-deployment' },
+            { label: 'Offline Single-Player', slug: 'guides/offline-single-player' },
           ],
         },
         {

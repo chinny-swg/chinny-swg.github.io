@@ -1,11 +1,11 @@
 ---
 title: Offline Single-Player
-description: Play on one Windows PC with no internet — a hidden local Core3 in WSL2 plus a launcher.
+description: Play on one Windows PC with no internet — a launcher plus a hidden local Core3, native on SQLite or in WSL2.
 ---
 
 The [swg-offline](https://github.com/chinny-swg/swg-offline) project turns this fork into an offline game. A Core3 server runs hidden on the same PC (natively as `core3.exe` on SQLite, or inside WSL2), and the launcher starts it, waits until it is ready, opens your client against it, and saves and stops the server when you quit.
 
-The fork itself is not changed for this. swg-offline builds a pinned Core3 commit and applies its own patches (SQLite backend, preset override files, loopback-only listening) from its [`core3/`](https://github.com/chinny-swg/swg-offline/tree/main/core3) folder.
+The fork itself is not changed for this. swg-offline builds a pinned Core3 commit and applies its own patches (among them the SQLite backend, the preset override files, loopback-only listening and the Windows build fixes) from its [`core3/`](https://github.com/chinny-swg/swg-offline/tree/main/core3) folder.
 
 The SWG client holds none of the game rules, so a server still has to run. The player just never sees it.
 
@@ -17,9 +17,14 @@ The SWG client holds none of the game rules, so a server still has to run. The p
 
 ## Set up
 
-1. Clone or download [swg-offline](https://github.com/chinny-swg/swg-offline).
-2. Either run the `SWGOffline-Setup` installer from swg-offline's build artifacts (native server, nothing else to install), or, for the WSL2 server, run `windows\install.bat` from an administrator command prompt. It installs WSL with Debian if needed, runs this fork's [`linux/bootstrap.sh`](https://github.com/chinny-swg/Core3/blob/unstable/linux/bootstrap.sh) at the pinned commit, applies the patches, copies your `.tre` files to `/tre`, and builds Core3.
-3. Start the game with the SWG Offline shortcut (or `windows\SWG Offline.cmd` for WSL2).
+Pick one of two ways to run the server:
+
+- **Native (recommended).** Download `SWGOffline-Setup` from the artifacts of swg-offline's latest [Build](https://github.com/chinny-swg/swg-offline/actions/workflows/build.yml) run and run it. It installs per user, needs nothing else, and asks for your SWG folder. The server is `core3.exe` on a SQLite file. Start the game with the SWG Offline shortcut.
+- **WSL2.** Clone or download [swg-offline](https://github.com/chinny-swg/swg-offline) and run `windows\install.bat` from an administrator command prompt. It installs WSL with Debian if needed, runs this fork's [`linux/bootstrap.sh`](https://github.com/chinny-swg/Core3/blob/unstable/linux/bootstrap.sh) at the pinned commit, applies the patches, copies your `.tre` files to `/tre`, and builds Core3 with MariaDB. Start the game with `windows\SWG Offline.cmd`.
+
+:::caution[Early]
+The native server is built and smoke-tested by swg-offline's CI (it starts on SQLite, saves and shuts down), but nobody has played a full session on it yet. The WSL2 route has been tested end to end on Linux, not yet under WSL.
+:::
 
 ## Play styles
 

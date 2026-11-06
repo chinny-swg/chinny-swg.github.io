@@ -52,15 +52,7 @@ cp default-env env-run
 echo 'REPO_PUBLIC_URL=https://github.com/chinny-swg' >> env-run
 ```
 
-## 3. Add Java to the image
-
-The Core3 build needs Java for its IDL compiler, and the Dockerfile doesn't install it. Add this line to `docker/Dockerfile`, just before `ENTRYPOINT ["/run.sh"]`:
-
-```dockerfile
-RUN apt-get update && apt-get install -y default-jdk-headless && rm -rf /var/lib/apt/lists/*
-```
-
-## 4. Load your `.tre` files
+## 3. Load your `.tre` files
 
 Copy the client's `.tre` files into the `shared-tre` Docker volume. Windows drives appear under `/mnt/c`. Use your SWGEmu folder, for example `C:\SWGEmu` or `C:\Program Files (x86)\SWGEmu\SWGEmu`:
 
@@ -72,7 +64,7 @@ cd ~/Core3/docker
 
 The server mounts this volume read-only at `/tre`.
 
-## 5. Build the image and run first boot
+## 4. Build the image and run first boot
 
 ```sh
 ./build.sh
@@ -88,7 +80,7 @@ The container's first boot does three things: it clones the fork, creates the Ma
 First boot prints a **database password** and a password for the container's `root` and `swgemu` users. They're also saved in `/home/swgemu/.env` inside the `swgemu-core3` volume. Never commit them anywhere.
 :::
 
-## 6. Compile the server
+## 5. Compile the server
 
 Inside the container shell (the prompt is `swgemu@swgemu-core3`):
 
@@ -106,7 +98,7 @@ git submodule update --init --recursive
 make build-ninja-debug CMAKE_ARGS='-DENABLE_BUILD_CLIENT=OFF -DCMAKE_CXX_FLAGS="-DNDEBUG=1"'
 ```
 
-## 7. Start the server
+## 6. Start the server
 
 ```sh
 run
@@ -128,7 +120,7 @@ ZonesEnabled = { "tutorial", "tatooine", "naboo", "corellia" }
 Then restart the server.
 :::
 
-## 8. Point the SWGEmu client at your server
+## 7. Point the SWGEmu client at your server
 
 Docker Desktop publishes the container's ports on Windows' own `127.0.0.1`, UDP included. That means the client on the same PC reaches the server at `127.0.0.1`.
 
@@ -157,7 +149,7 @@ The launcher can rewrite `swgemu_login.cfg` when it updates or scans the client.
 
 If Windows Firewall asks about Docker Desktop, allow it on **private** networks.
 
-## 9. Log in
+## 8. Log in
 
 `AutoReg` is on, so the first login with a new username creates that account. The password you type becomes its password.
 
@@ -182,5 +174,5 @@ Your galaxy (database, world saves and compiled server) lives in the `swgemu-cor
 | The client says it can't connect to the login server | Is the server up (`[Core] initialized`)? Does `swgemu_login.cfg` still say `127.0.0.1`? Does `docker ps` list the `swgemu-core3` container with ports `44453/udp` and `44463/udp`? |
 | Login works, but the galaxy is down or connecting hangs | The galaxy address must be `127.0.0.1`. `run` sets it from `GALAXY_ADDRESS` in `~/.env`. |
 | `run` can't connect to the database | Start MariaDB first: `sudo /etc/init.d/mariadb start`. |
-| The build fails at `find_package(Java)` | Step 3 was skipped. Add Java to the Dockerfile, run `./build.sh` again, then recreate the container with `./run.sh`. The volume keeps your data. |
+| The build fails at `find_package(Java)` | Your image was built from a fork checkout from before Java was added to `docker/Dockerfile`. Run `git pull`, then `./build.sh`, then `docker container rm -f swgemu-core3` and `./run.sh` to recreate the container. The volume keeps your data. |
 | The build or server is killed with no error | WSL ran out of memory. Raise `memory=` in `.wslconfig`, or load fewer planets. |

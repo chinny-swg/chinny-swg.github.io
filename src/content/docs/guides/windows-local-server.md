@@ -5,7 +5,7 @@ description: Run Core3 in Docker Desktop on your Windows PC and play on it with 
 
 This guide runs the Core3 server in a Docker container on your own Windows PC, through Docker Desktop's WSL 2 backend. You then point your SWGEmu client at it and play, all on one machine.
 
-It uses the fork's own [`docker/`](https://github.com/chinny-swg/Core3/tree/unstable/docker) scripts. For general Docker background, see [Docker Deployment](/guides/docker-deployment/).
+It uses [core3-docker](https://github.com/chinny-swg/core3-docker), a thin layer on top of the image built from Core3's own [`docker/`](https://github.com/chinny-swg/Core3/tree/unstable/docker) folder. Core3 itself stays unchanged. The layer adds two things the base image lacks: Java, which the build needs, and starting MariaDB on every boot. For general Docker background, see [Docker Deployment](/guides/docker-deployment/).
 
 ## What you need
 
@@ -35,54 +35,48 @@ memory=12GB
 Then run `wsl --shutdown` in PowerShell and restart Docker Desktop.
 :::
 
-## 2. Get the fork and point it at chinny-swg
+## 2. Get core3-docker
 
-Clone the fork inside WSL's own filesystem, not under `/mnt/c`. The shell scripts need Linux line endings, and builds there are much faster.
+Clone it inside WSL's own filesystem, not under `/mnt/c`. The scripts need Linux line endings.
 
 ```sh
 cd ~
-git clone https://github.com/chinny-swg/Core3.git
-cd Core3/docker
-```
-
-The container's first boot clones Core3 from `REPO_PUBLIC_URL`, which defaults to upstream `swgemu`. Point it at this fork before building:
-
-```sh
-cp default-env env-run
-echo 'REPO_PUBLIC_URL=https://github.com/chinny-swg' >> env-run
+git clone https://github.com/chinny-swg/core3-docker.git
+cd core3-docker
 ```
 
 ## 3. Load your `.tre` files
 
-Copy the client's `.tre` files into the `shared-tre` Docker volume. Windows drives appear under `/mnt/c`. Use your SWGEmu folder, for example `C:\SWGEmu` or `C:\Program Files (x86)\SWGEmu\SWGEmu`:
+Copy the client's `.tre` files into the `shared-tre` Docker volume, which the server mounts read-only at `/tre`. Windows drives appear under `/mnt/c`. Use your SWGEmu folder, for example `C:\SWGEmu` or `C:\Program Files (x86)\SWGEmu\SWGEmu`:
 
 ```sh
-cd "/mnt/c/Program Files (x86)/SWGEmu/SWGEmu"
-tar cf - *.tre | docker run -i --rm -v shared-tre:/tre debian:bookworm bash -c 'tar xvf - -C /tre'
-cd ~/Core3/docker
+./load-tre.sh "/mnt/c/Program Files (x86)/SWGEmu/SWGEmu"
 ```
 
-The server mounts this volume read-only at `/tre`.
-
-## 4. Build the image and run first boot
+## 4. Build the images and start the container
 
 ```sh
 ./build.sh
-./run.sh
+docker compose up -d
+docker compose logs core3
 ```
 
-- **`build.sh`** builds the `swgemu/core3-dev` image. This takes a while.
-- **`run.sh`** starts the `swgemu-core3` container and drops you into a shell inside it.
-
-The container's first boot does three things: it clones the fork, creates the MariaDB database, and writes `config-local.lua`.
+- **`build.sh`** builds Core3's `swgemu/core3-dev` image straight from the fork's `docker/` folder on GitHub, then the `core3-local` layer on top. This takes a while.
+- **`docker compose up -d`** starts the `swgemu-core3` container in the background. Its first boot clones the chinny-swg fork, creates the MariaDB database, and writes `config-local.lua`.
 
 :::caution[Write down the passwords]
-First boot prints a **database password** and a password for the container's `root` and `swgemu` users. They're also saved in `/home/swgemu/.env` inside the `swgemu-core3` volume. Never commit them anywhere.
+`docker compose logs core3` shows what first boot printed. That includes a **database password** and a password for the container's `root` and `swgemu` users. They're also saved in `/home/swgemu/.env` inside the `swgemu-core3` volume. Never commit them anywhere.
 :::
 
 ## 5. Compile the server
 
-Inside the container shell (the prompt is `swgemu@swgemu-core3`):
+Open a shell in the container:
+
+```sh
+./shell.sh
+```
+
+Then, at the `swgemu@swgemu-core3` prompt:
 
 ```sh
 build
@@ -157,22 +151,23 @@ To get staff commands such as `/teleport`, give the account admin rights: see [G
 
 ## Day to day
 
-After a reboot or a Docker Desktop restart, the container comes back by itself (`--restart=unless-stopped`), but MariaDB and the server don't. To start playing again, run this in Ubuntu:
+After a reboot or a Docker Desktop restart, the container comes back by itself (`restart: unless-stopped`), and core3-docker starts MariaDB with it. The server itself doesn't start. To play again, run this in Ubuntu, from the `core3-docker` folder:
 
 ```sh
-docker exec -it -u swgemu swgemu-core3 bash -l
-sudo /etc/init.d/mariadb start
+./shell.sh
 run
 ```
 
-Your galaxy (database, world saves and compiled server) lives in the `swgemu-core3` volume. It survives container restarts and image rebuilds. **Don't delete that volume**: `./run.sh clean` does, and wipes everything.
+Your galaxy (database, world saves and compiled server) lives in the `swgemu-core3` volume. It survives container restarts and image rebuilds. **Don't delete that volume**: `docker compose down -v`, `docker volume rm swgemu-core3` and Core3's own `./run.sh clean` all wipe it.
+
+To pick up a newer Core3 image or core3-docker, run `git pull` and `./build.sh` again, then `docker compose up -d`. Compose recreates the container, and the volume keeps your galaxy.
 
 ## Troubleshooting
 
 | Symptom | Check |
 |---------|-------|
 | The client says it can't connect to the login server | Is the server up (`[Core] initialized`)? Does `swgemu_login.cfg` still say `127.0.0.1`? Does `docker ps` list the `swgemu-core3` container with ports `44453/udp` and `44463/udp`? |
-| Login works, but the galaxy is down or connecting hangs | The galaxy address must be `127.0.0.1`. `run` sets it from `GALAXY_ADDRESS` in `~/.env`. |
-| `run` can't connect to the database | Start MariaDB first: `sudo /etc/init.d/mariadb start`. |
-| The build fails at `find_package(Java)` | Your image was built from a fork checkout from before Java was added to `docker/Dockerfile`. Run `git pull`, then `./build.sh`, then `docker container rm -f swgemu-core3` and `./run.sh` to recreate the container. The volume keeps your data. |
+| Login works, but the galaxy is down or connecting hangs | The galaxy address must be `127.0.0.1`. `run` sets it from `GALAXY_ADDRESS` in `~/.env`, which first boot copied from `compose.yaml`. |
+| `run` can't connect to the database | MariaDB didn't start with the container. Check `docker compose logs core3` for a core3-docker warning, and start it by hand: `sudo /etc/init.d/mariadb start`. |
+| The build fails at `find_package(Java)` | The container runs Core3's plain image instead of `core3-local`. Run `./build.sh`, then `docker compose up -d`. |
 | The build or server is killed with no error | WSL ran out of memory. Raise `memory=` in `.wslconfig`, or load fewer planets. |

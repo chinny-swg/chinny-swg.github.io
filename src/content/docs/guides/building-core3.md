@@ -52,7 +52,7 @@ Stock builds can fail at `cmake` with **`find_package(Java REQUIRED)` → "Could
 RUN apt-get install -y default-jdk-headless
 ```
 
-(That installs OpenJDK; the fix should be folded into the fork's Dockerfile.)
+(That installs OpenJDK.) The fork's Dockerfile stays as upstream ships it. To get Java without editing it, build [core3-docker](https://github.com/chinny-swg/core3-docker)'s `core3-local` image instead, which adds the JDK on top. The [Windows guide](/guides/windows-local-server/) uses that image.
 
 ## Next
 

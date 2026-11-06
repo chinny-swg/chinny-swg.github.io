@@ -34,7 +34,7 @@ This guide runs the Core3 server **headless and always-on** on a Linux host, man
 
 ## Build gotchas
 
-- **Dockerfile missing Java** → `cmake find_package(Java REQUIRED)` fails. Fixed in the fork: `docker/Dockerfile` now installs `default-jdk-headless`. If you build from an older checkout, pull first.
+- **Dockerfile missing Java** → `cmake find_package(Java REQUIRED)` fails. Add `RUN apt-get install -y default-jdk-headless` before `ENTRYPOINT` in `docker/Dockerfile`, or build on [core3-docker](https://github.com/chinny-swg/core3-docker)'s `core3-local` image, which adds it without changing Core3.
 - **`build` wrapper loadavg gate broken on a 4-core box:** `max_ldavg=$(( $(nproc)/8*5 ))` = 0, so it waits forever. Call the make target directly instead:
   ```sh
   git submodule update --init --recursive

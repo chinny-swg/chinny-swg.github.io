@@ -69,4 +69,4 @@ First boot generates an **admin account password** and a **database password** a
 
 ## Connecting a client
 
-Patch an original SWG client to point at your server's address with login port **44453**, then create an account.
+Patch an original SWG client to point at your server's address with login port **44453**, then create an account. For the server and client on one Windows PC, see [Local Server on Windows (WSL + Docker)](/guides/windows-local-server/).
